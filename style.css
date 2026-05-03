@@ -395,17 +395,6 @@ body {
 .legend-icon { font-size: 1.2rem; flex-shrink: 0; }
 .legend-text { flex: 1; color: #222; }
 
-/* ── Search hint link ── */
-.search-hint {
-  font-size: 0.8rem;
-  text-align: center;
-}
-.search-hint a {
-  color: #01696f;
-  text-decoration: underline;
-}
-.search-hint a:hover { color: #014d52; }
-
 /* ── Author credits ── */
 .author-credits {
   width: min(480px, calc(100vw - 32px));
