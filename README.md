@@ -90,7 +90,7 @@ usda_to_sql.py      Data pipeline: USDA CSV → MySQL
 
 Application code: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
-Generated with [Perplexity](https://www.perplexity.ai/) and [Claude Sonnet 4.6](https://www.anthropic.com/news/claude-sonnet-4-6)
+Code generated with the help of [Perplexity](https://www.perplexity.ai/) and [Claude Sonnet 4.6](https://www.anthropic.com/news/claude-sonnet-4-6)
 
 **Task 4. 0955.26: El enfoque metodológico AICLE/CLIL en Educación Infantil y Primaria: curso básico.**
 por **Ramón Cutanda López**, 2026
