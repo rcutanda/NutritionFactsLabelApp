@@ -1,0 +1,9 @@
+# Block direct browser access to db_config.php
+<Files "db_config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Clean URLs: /api -> api.php
+RewriteEngine On
+RewriteRule ^api$ api.php [L,QSA]

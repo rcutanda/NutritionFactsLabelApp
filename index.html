@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nutrition Facts Label App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="page-header">
+	<h1>Nutrition Facts Label App</h1>
+		<p>Study <strong>real branded food products</strong><br>from the <a href="https://fdc.nal.usda.gov/">USDA FoodData Central database</a>.</p>
+</header>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-new" id="btnNew">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M13.65 2.35A8 8 0 1 0 15 8h-1.5a6.5 6.5 0 1 1-1.1-3.65l-1.9 1.9H15V1l-1.35 1.35Z"
+              fill="currentColor"/>
+      </svg>
+      Load a random product
+    </button>
+
+    <label class="checkbox-label">
+      <input type="checkbox" id="chkRedFlags" />
+      Show warnings and checks
+    </label>
+  </div>
+
+  <div class="search-hint">
+    <a href="https://world.openfoodfacts.org/cgi/search.pl?search_terms=" target="_blank" rel="noopener">Click here to search info for a particular product</a>
+  </div>
+
+  <!-- Checks & Warnings legend -->
+  <div class="legend-box" id="legendBox">
+    <h3>What do the highlights mean?</h3>
+    <div class="legend-row leg-red">
+      <span class="legend-icon">🚩</span>
+      <span class="legend-text"><strong>Red — High (&gt;20% Daily Value or ingredient used in ultra-processed products):</strong> nutrient to limit is very high per serving.</span>
+    </div>
+    <div class="legend-row leg-orange">
+      <span class="legend-icon">⚠️</span>
+      <span class="legend-text"><strong>Orange — Low (&lt;5% Daily Value):</strong> beneficial nutrient is very low per serving.</span>
+    </div>
+    <div class="legend-row leg-green">
+      <span class="legend-icon">✅</span>
+      <span class="legend-text"><strong>Green:</strong> either a beneficial nutrient is high (&gt;20%Daily Value), or a nutrient to limit is low (&lt;5% Daily Value).</span>
+    </div>
+    <hr style="border:none;border-top:1px solid #ddd;margin:6px 0;">
+    <p style="font-size:0.78rem;color:#555;margin-top:4px;"><strong>Source:</strong> <a href="https://doi.org/10.1017/S1368980018003762" target="_blank" rel="noopener">NOVA Group 4 (Monteiro et al., 2019, <em>Public Health Nutrition</em>)</a> &amp; <a href="https://www.fao.org/fao-who-codexalimentarius/codex-texts/dbs/gsfa/en/" target="_blank" rel="noopener">FAO/WHO Codex Alimentarius</a>.</p>
+  </div>
+
+  <!-- Skeleton loader -->
+  <div class="skeleton-label" id="skeleton" style="display:none">
+    <div class="skel skel-title"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-thick"></div>
+    <div class="skel skel-lg"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-sm"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-line"></div>
+    <div class="skel skel-sm"></div>
+    <p class="skel-status" id="skelStatus">Loading…</p>
+  </div>
+
+  <!-- Error box -->
+  <div class="error-box" id="errorBox" style="display:none"></div>
+
+  <!-- Product name / brand / category bar -->
+  <div class="product-bar" id="productBar">
+    <span class="prod-name"     id="prodName"></span>
+    <span class="prod-brand"    id="prodBrand"></span>
+    <span class="prod-category" id="prodCategory"></span>
+
+    <!-- Product image -->
+    <div class="product-image-wrap" id="imageWrap">
+      <img id="productImg" src="" alt="Product photo" style="display:none"
+           onclick="window.open(this._offUrl||this.src,'_blank')" />
+      <p class="img-credit" id="imgCredit" style="display:none">
+        Photo: <a id="imgCreditLink" href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>
+        — <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>
+      </p>
+      <p class="img-missing" id="imgMissing" style="display:none">
+        No photo available —
+        <a id="imgMissingLink" href="#" target="_blank" rel="noopener">add one on Open Food Facts</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Label scaler -->
+  <div class="label-scaler" id="labelScaler">
+    <div class="nfl-wrap" id="nflWrap">
+      <div class="nfl" id="nfl">
+
+        <div class="nfl-title">Nutrition<br>Facts</div>
+        <div class="nfl-servings-per" id="nflServingsper">— servings per container</div>
+        <div class="nfl-serving-row">
+          <span>Serving size</span>
+          <span id="nflServingsize"></span>
+        </div>
+
+        <div class="nfl-bar-thick"></div>
+        <div class="nfl-amount-label">Amount per serving</div>
+        <div class="nfl-calories-row">
+          <span class="nfl-calories-label">Calories</span>
+          <span class="nfl-calories-value" id="nflCalories"></span>
+        </div>
+
+        <div class="nfl-bar-medium"></div>
+        <div class="nfl-dv-header">% Daily Value*</div>
+
+        <div class="nfl-row nfl-bold" id="rowFat">
+          <span class="nfl-row-label">Total Fat <span class="nfl-italic" id="nflFat"></span></span>
+          <span class="nfl-row-dv" id="dvFat"></span>
+        </div>
+        <div class="nfl-row nfl-indent1" id="rowSatFat">
+          <span class="nfl-row-label">Saturated Fat <span id="nflSatfat"></span></span>
+          <span class="nfl-row-dv" id="dvSatfat"></span>
+        </div>
+        <div class="nfl-row nfl-indent1" id="rowTransFat">
+          <span class="nfl-row-label"><span class="nfl-italic">Trans</span> Fat <span id="nflTransfat"></span></span>
+          <span class="nfl-row-dv"></span>
+        </div>
+        <div class="nfl-row nfl-indent1" id="rowPolyFat">
+          <span class="nfl-row-label">Polyunsaturated Fat <span id="nflPolyfat"></span></span>
+          <span class="nfl-row-dv"></span>
+        </div>
+        <div class="nfl-row nfl-indent1" id="rowMonoFat">
+          <span class="nfl-row-label">Monounsaturated Fat <span id="nflMonofat"></span></span>
+          <span class="nfl-row-dv"></span>
+        </div>
+        <div class="nfl-row nfl-bold" id="rowCholesterol">
+          <span class="nfl-row-label">Cholesterol <span id="nflCholesterol"></span></span>
+          <span class="nfl-row-dv" id="dvCholesterol"></span>
+        </div>
+        <div class="nfl-row nfl-bold" id="rowSodium">
+          <span class="nfl-row-label">Sodium <span id="nflSodium"></span></span>
+          <span class="nfl-row-dv" id="dvSodium"></span>
+        </div>
+        <div class="nfl-row nfl-bold" id="rowCarbs">
+          <span class="nfl-row-label">Total Carbohydrate <span id="nflCarbs"></span></span>
+          <span class="nfl-row-dv" id="dvCarbs"></span>
+        </div>
+        <div class="nfl-row nfl-indent1" id="rowFiber">
+          <span class="nfl-row-label">Dietary Fiber <span id="nflFiber"></span></span>
+          <span class="nfl-row-dv" id="dvFiber"></span>
+        </div>
+        <div class="nfl-row nfl-indent1" id="rowSugars">
+          <span class="nfl-row-label">Total Sugars <span id="nflSugars"></span></span>
+          <span class="nfl-row-dv"></span>
+        </div>
+        <div class="nfl-row nfl-bold" id="rowProtein">
+          <span class="nfl-row-label">Protein <span id="nflProtein"></span></span>
+          <span class="nfl-row-dv" id="dvProtein"></span>
+        </div>
+
+        <div class="nfl-bar-medium"></div>
+
+        <div class="nfl-micros">
+          <div class="nfl-micro-row" id="rowVitD">
+            <span>Vitamin D <span id="nflVitd"></span></span>
+            <span id="dvVitd"></span>
+          </div>
+          <div class="nfl-micro-row" id="rowCalcium">
+            <span>Calcium <span id="nflCalcium"></span></span>
+            <span id="dvCalcium"></span>
+          </div>
+          <div class="nfl-micro-row" id="rowIron">
+            <span>Iron <span id="nflIron"></span></span>
+            <span id="dvIron"></span>
+          </div>
+          <div class="nfl-micro-row" id="rowPotassium">
+            <span>Potassium <span id="nflPotassium"></span></span>
+            <span id="dvPotassium"></span>
+          </div>
+        </div>
+
+        <div class="nfl-footnote">
+          * The % Daily Value (DV) tells you how much a nutrient in a serving of food
+          contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
+        </div>
+
+      </div><!-- /.nfl -->
+    </div><!-- /.nfl-wrap -->
+  </div><!-- /.label-scaler -->
+
+  <!-- Ingredients box -->
+  <div class="ingredients-box" id="ingredientsBox">
+    <strong>INGREDIENTS:</strong> <span id="ingredientsList"></span>
+  </div>
+
+  <!-- Source -->
+    <div class="author-credits" id="creditsBar">
+        <p style="text-align: center;"><strong>SOURCE: Nutritional data:&nbsp;</strong><a href="https://fdc.nal.usda.gov" target="_blank" rel="noopener">USDA FoodData Central</a><br>Public domain, CC0 1.0<br><span id="fdcChipWrap"></span></p>
+  </div>
+
+  <!-- Credits -->
+    <div class="author-credits">
+		<p style="text-align: center;"><strong>Task 4. 0955.26: El enfoque metodol&oacute;gico AICLE/CLIL en Educaci&oacute;n Infantil y Primaria: curso b&aacute;sico.</strong> por <strong>Ram&oacute;n Cutanda L&oacute;pez</strong>, 2026</p>
+		<p style="text-align: center;"><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"><img src="https://licensebuttons.net/l/by-sa/4.0/88x31.png" alt="Licencia BY-SA"></a></p>
+		<p style="text-align: center;"><img src="https://colegiodelaesperanza.com/app/nfl/GitHub_Lockup_Black.png" alt="" width="127" height="29"><br><a href="https://github.com/rcutanda/NutritionFactsLabelApp">https://github.com/rcutanda/NutritionFactsLabelApp</a></p>
+  </div>
+
+<script>
+const FLAG = {
+  fat_g:           { high: 20, low: 5 },
+  saturated_fat_g: { high: 20, low: 5 },
+  cholesterol_mg:  { high: 20, low: 5 },
+  sodium_mg:       { high: 20, low: 5 },
+  carbohydrate_g:  { high: 20, low: 5 },
+  fiber_g:         { high: 20, low: 5, invertGood: true },
+  protein_g:       { high: 20, low: 5, invertGood: true },
+  calcium_mg:      { high: 20, low: 5, invertGood: true },
+  iron_mg:         { high: 20, low: 5, invertGood: true },
+  potassium_mg:    { high: 20, low: 5, invertGood: true },
+  vitamin_d_mcg:   { high: 20, low: 5, invertGood: true },
+};
+
+// ── Ingredient flags (NOVA Group 4 — Monteiro et al. 2019, Public Health Nutrition)
+// ── and FAO/WHO Codex Alimentarius additive classification ───────────────────
+const INGREDIENTS = [
+  // RED: Industrial fats
+  { pattern: /partially hydrogenated/i,               level: 'red',    label: 'Industrial fat (trans fat source)' },
+  { pattern: /interesterified/i,                      level: 'red',    label: 'Industrial fat' },
+  // RED: Artificial colours
+  { pattern: /\bred\s*40\b/i,                        level: 'red',    label: 'Artificial colour (Red 40)' },
+  { pattern: /\byellow\s*5\b/i,                      level: 'red',    label: 'Artificial colour (Yellow 5)' },
+  { pattern: /\byellow\s*6\b/i,                      level: 'red',    label: 'Artificial colour (Yellow 6)' },
+  { pattern: /\bblue\s*1\b/i,                        level: 'red',    label: 'Artificial colour (Blue 1)' },
+  { pattern: /\bblue\s*2\b/i,                        level: 'red',    label: 'Artificial colour (Blue 2)' },
+  { pattern: /\bred\s*3\b/i,                         level: 'red',    label: 'Artificial colour (Red 3)' },
+  { pattern: /\bgreen\s*3\b/i,                       level: 'red',    label: 'Artificial colour (Green 3)' },
+  // RED: Preservatives
+  { pattern: /sodium benzoate/i,                      level: 'red',    label: 'Preservative (sodium benzoate)' },
+  { pattern: /potassium benzoate/i,                   level: 'red',    label: 'Preservative (potassium benzoate)' },
+  { pattern: /sodium nitrite/i,                       level: 'red',    label: 'Preservative (sodium nitrite)' },
+  { pattern: /sodium nitrate/i,                       level: 'red',    label: 'Preservative (sodium nitrate)' },
+  { pattern: /\bBHA\b/i,                              level: 'red',    label: 'Preservative (BHA)' },
+  { pattern: /\bBHT\b/i,                              level: 'red',    label: 'Preservative (BHT)' },
+  { pattern: /\bTBHQ\b/i,                             level: 'red',    label: 'Preservative (TBHQ)' },
+  // RED: Artificial sweeteners
+  { pattern: /aspartame/i,                            level: 'red',    label: 'Artificial sweetener (aspartame)' },
+  { pattern: /sucralose/i,                            level: 'red',    label: 'Artificial sweetener (sucralose)' },
+  { pattern: /acesulfame/i,                           level: 'red',    label: 'Artificial sweetener (acesulfame-K)' },
+  { pattern: /saccharin/i,                            level: 'red',    label: 'Artificial sweetener (saccharin)' },
+  { pattern: /neotame/i,                              level: 'red',    label: 'Artificial sweetener (neotame)' },
+  { pattern: /advantame/i,                            level: 'red',    label: 'Artificial sweetener (advantame)' },
+  // ORANGE: Added sugars & syrups
+  { pattern: /high.fructose corn syrup/i,             level: 'orange', label: 'Added sugar (high-fructose corn syrup)' },
+  { pattern: /corn syrup/i,                           level: 'orange', label: 'Added sugar (corn syrup)' },
+  { pattern: /invert sugar/i,                         level: 'orange', label: 'Added sugar (invert sugar)' },
+  { pattern: /cane syrup/i,                           level: 'orange', label: 'Added sugar (cane syrup)' },
+  { pattern: /\bdextrose\b/i,                         level: 'orange', label: 'Added sugar (dextrose)' },
+  { pattern: /\bmaltose\b/i,                          level: 'orange', label: 'Added sugar (maltose)' },
+  { pattern: /\bfructose\b/i,                         level: 'orange', label: 'Added sugar (fructose)' },
+  { pattern: /maltodextrin/i,                         level: 'orange', label: 'Added sugar / texture agent (maltodextrin)' },
+  // ORANGE: Flavour enhancers
+  { pattern: /monosodium glutamate/i,                 level: 'orange', label: 'Flavour enhancer (MSG)' },
+  { pattern: /\bMSG\b/,                               level: 'orange', label: 'Flavour enhancer (MSG)' },
+  { pattern: /disodium inosinate/i,                   level: 'orange', label: 'Flavour enhancer (disodium inosinate)' },
+  { pattern: /disodium guanylate/i,                   level: 'orange', label: 'Flavour enhancer (disodium guanylate)' },
+  // ORANGE: Emulsifiers & stabilisers
+  { pattern: /carrageenan/i,                          level: 'orange', label: 'Emulsifier / stabiliser (carrageenan)' },
+  { pattern: /polysorbate/i,                          level: 'orange', label: 'Emulsifier (polysorbate)' },
+  { pattern: /carboxymethylcellulose/i,               level: 'orange', label: 'Emulsifier (CMC)' },
+  { pattern: /xanthan gum/i,                          level: 'orange', label: 'Stabiliser (xanthan gum)' },
+  { pattern: /guar gum/i,                             level: 'orange', label: 'Stabiliser (guar gum)' },
+  { pattern: /soy lecithin/i,                         level: 'orange', label: 'Emulsifier (soy lecithin)' },
+  { pattern: /sunflower lecithin/i,                   level: 'orange', label: 'Emulsifier (sunflower lecithin)' },
+  // ORANGE: Texture agents
+  { pattern: /modified.*(starch|corn|tapioca|potato)/i, level: 'orange', label: 'Texture agent (modified starch)' },
+  { pattern: /cellulose powder/i,                     level: 'orange', label: 'Texture agent (cellulose powder)' },
+  { pattern: /microcrystalline cellulose/i,           level: 'orange', label: 'Texture agent (microcrystalline cellulose)' },
+];
+
+function applyIngredientFlags() {
+  const box = document.getElementById('ingredientsList');
+  if (!box || !currentProduct) return;
+  const raw = currentProduct.ingredients || '';
+  const on  = document.getElementById('chkRedFlags').checked;
+  if (!on) {
+    box.textContent = raw || '—';
+    return;
+  }
+  const tokens = raw.split(/([,;()])/);
+  const parts  = tokens.map(token => {
+    if (/^[,;()]$/.test(token)) return token;
+    const trimmed = token.trim().replace(/\*+$/, '').trim();
+    if (!trimmed) return token;
+    for (const rule of INGREDIENTS) {
+      if (rule.pattern.test(trimmed)) {
+        const cls  = rule.level === 'red' ? 'ing-red' : 'ing-orange';
+        const icon = rule.level === 'red' ? '🚩' : '⚠️';
+        const display = token.trim();
+        return token.replace(token.trim(),
+          `<mark class="${cls}" title="${rule.label}">${display} ${icon}</mark>`);
+      }
+    }
+    return token;
+  });
+  box.innerHTML = parts.join('') || '—';
+}
+
+let currentProduct = null;
+
+function fmt(val, unit) {
+  if (val === null || val === undefined) return '—';
+  return val + (unit || '');
+}
+function dvStr(pct) {
+  return (pct === null || pct === undefined) ? '' : pct + '%';
+}
+
+function applyRedFlags() {
+  const on = document.getElementById('chkRedFlags').checked;
+  if (!currentProduct) return;
+  const dv = currentProduct.daily_value_pct;
+  const rows = {
+    rowFat:         { key: 'fat_g',           dv: dv.fat_g },
+    rowSatFat:      { key: 'saturated_fat_g', dv: dv.saturated_fat_g },
+    rowCholesterol: { key: 'cholesterol_mg',  dv: dv.cholesterol_mg },
+    rowSodium:      { key: 'sodium_mg',       dv: dv.sodium_mg },
+    rowCarbs:       { key: 'carbohydrate_g',  dv: dv.carbohydrate_g },
+    rowFiber:       { key: 'fiber_g',         dv: dv.fiber_g },
+    rowProtein:     { key: 'protein_g',       dv: dv.protein_g },
+    rowVitD:        { key: 'vitamin_d_mcg',   dv: dv.vitamin_d_mcg },
+    rowCalcium:     { key: 'calcium_mg',      dv: dv.calcium_mg },
+    rowIron:        { key: 'iron_mg',         dv: dv.iron_mg },
+    rowPotassium:   { key: 'potassium_mg',    dv: dv.potassium_mg },
+  };
+  for (const [id, { key, dv: val }] of Object.entries(rows)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.classList.remove('flag-red','flag-orange','flag-green','flag-neutral');
+    el.querySelectorAll('.flag-emoji').forEach(e => e.remove());
+    if (!on || val === null || val === undefined) continue;
+    const cfg = FLAG[key];
+    if (!cfg) continue;
+    let cls = '', emoji = '';
+    if (cfg.invertGood) {
+      if (val >= cfg.high)     { cls = 'flag-green';  emoji = '✅'; }
+      else if (val <= cfg.low) { cls = 'flag-orange'; emoji = '⚠️'; }
+    } else {
+      if (val >= cfg.high)     { cls = 'flag-red';    emoji = '🚩'; }
+      else if (val <= cfg.low) { cls = 'flag-green';  emoji = '✅'; }
+    }
+    if (cls) {
+      el.classList.add(cls);
+      const span = document.createElement('span');
+      span.className = 'flag-emoji';
+      span.textContent = emoji;
+      el.appendChild(span);
+    }
+  }
+  applyIngredientFlags();
+}
+
+function showProduct(p) {
+  currentProduct = p;
+  const n = p.nutrients;
+  const dv = p.daily_value_pct;
+
+  document.getElementById('prodName').textContent     = p.description || '';
+  const brand = [p.brand_name, p.brand_owner].filter(Boolean).join(' · ');
+  document.getElementById('prodBrand').textContent    = brand;
+  document.getElementById('prodCategory').textContent = p.branded_food_category || '';
+
+  const img      = document.getElementById('productImg');
+  const credit   = document.getElementById('imgCredit');
+  const missing  = document.getElementById('imgMissing');
+  const missingLk= document.getElementById('imgMissingLink');
+  if (p.image_front_url) {
+    img.src = p.image_front_url;
+    img._offUrl = p.gtin_upc ? 'https://world.openfoodfacts.org/product/' + p.gtin_upc : 'https://world.openfoodfacts.org';
+    document.getElementById('imgCreditLink').href = img._offUrl;
+    img.style.display    = 'block';
+    credit.style.display = 'block';
+    missing.style.display= 'none';
+  } else {
+    img.style.display    = 'none';
+    credit.style.display = 'none';
+    missing.style.display= 'block';
+    missingLk.href = p.gtin_upc
+      ? `https://world.openfoodfacts.org/product/${p.gtin_upc}`
+      : 'https://world.openfoodfacts.org';
+  }
+
+  const servStr = p.serving_size
+    ? `${p.serving_size}${p.serving_size_unit || ''}${p.household_serving_fulltext ? ' (' + p.household_serving_fulltext + ')' : ''}`
+    : '—';
+  document.getElementById('nflServingsize').textContent = servStr;
+  document.getElementById('nflCalories').textContent    = fmt(n.energy_kcal);
+
+  document.getElementById('nflFat').textContent         = fmt(n.fat_g, 'g');
+  document.getElementById('dvFat').textContent          = dvStr(dv.fat_g);
+  document.getElementById('nflSatfat').textContent      = fmt(n.saturated_fat_g, 'g');
+  document.getElementById('dvSatfat').textContent       = dvStr(dv.saturated_fat_g);
+  document.getElementById('nflTransfat').textContent    = fmt(n.trans_fat_g, 'g');
+  document.getElementById('nflPolyfat').textContent     = fmt(n.polyunsat_fat_g, 'g');
+  document.getElementById('nflMonofat').textContent     = fmt(n.monounsat_fat_g, 'g');
+  document.getElementById('nflCholesterol').textContent = fmt(n.cholesterol_mg, 'mg');
+  document.getElementById('dvCholesterol').textContent  = dvStr(dv.cholesterol_mg);
+  document.getElementById('nflSodium').textContent      = fmt(n.sodium_mg, 'mg');
+  document.getElementById('dvSodium').textContent       = dvStr(dv.sodium_mg);
+  document.getElementById('nflCarbs').textContent       = fmt(n.carbohydrate_g, 'g');
+  document.getElementById('dvCarbs').textContent        = dvStr(dv.carbohydrate_g);
+  document.getElementById('nflFiber').textContent       = fmt(n.fiber_g, 'g');
+  document.getElementById('dvFiber').textContent        = dvStr(dv.fiber_g);
+  document.getElementById('nflSugars').textContent      = fmt(n.sugars_g, 'g');
+  document.getElementById('nflProtein').textContent     = fmt(n.protein_g, 'g');
+  document.getElementById('dvProtein').textContent      = dvStr(dv.protein_g);
+
+  document.getElementById('nflVitd').textContent      = fmt(n.vitamin_d_mcg, 'mcg');
+  document.getElementById('dvVitd').textContent       = dvStr(dv.vitamin_d_mcg);
+  document.getElementById('nflCalcium').textContent   = fmt(n.calcium_mg, 'mg');
+  document.getElementById('dvCalcium').textContent    = dvStr(dv.calcium_mg);
+  document.getElementById('nflIron').textContent      = fmt(n.iron_mg, 'mg');
+  document.getElementById('dvIron').textContent       = dvStr(dv.iron_mg);
+  document.getElementById('nflPotassium').textContent = fmt(n.potassium_mg, 'mg');
+  document.getElementById('dvPotassium').textContent  = dvStr(dv.potassium_mg);
+
+  document.getElementById('ingredientsList').textContent = p.ingredients || '—';
+  applyIngredientFlags();
+  document.getElementById('fdcChipWrap').innerHTML =
+    `<span class="fdc-chip">FDC ID: ${p.fdc_id}</span>`;
+
+  document.getElementById('skeleton').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+  ['productBar','nflWrap','ingredientsBox','creditsBar'].forEach(id => {
+    document.getElementById(id).style.display = 'block';
+  });
+
+  applyRedFlags();
+  scaleLabel();
+}
+
+function scaleLabel() {
+  const wrap  = document.getElementById('nflWrap');
+  const scaler= document.getElementById('labelScaler');
+  if (!wrap || !scaler) return;
+  const available = Math.min(window.innerWidth - 32, 420);
+  const scale = Math.min(1, available / (wrap.offsetWidth || 340));
+  scaler.style.setProperty('--label-scale', scale);
+  scaler.style.setProperty('--label-natural-height', (wrap.offsetHeight || 620) + 'px');
+}
+
+async function loadProduct() {
+  ['productBar','nflWrap','ingredientsBox','creditsBar'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('errorBox').style.display  = 'none';
+  document.getElementById('skeleton').style.display  = 'block';
+  document.getElementById('skelStatus').textContent  = 'Loading…';
+
+  try {
+    const res  = await fetch('api.php');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    showProduct(data);
+  } catch (err) {
+    document.getElementById('skeleton').style.display = 'none';
+    const box = document.getElementById('errorBox');
+    box.style.display = 'block';
+    box.textContent   = 'Error: ' + err.message;
+  }
+}
+
+document.getElementById('btnNew').addEventListener('click', loadProduct);
+document.getElementById('chkRedFlags').addEventListener('change', function() {
+  applyRedFlags();
+  document.getElementById('legendBox').classList.toggle('visible', this.checked);
+});
+window.addEventListener('resize', scaleLabel);
+document.addEventListener('DOMContentLoaded', loadProduct);
+</script>
+</body>
+</html>
