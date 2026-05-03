@@ -1,6 +1,6 @@
 # Nutrition Facts Label App
 
-A web-based tool for studying real branded food products using data from the USDA FoodData Central database and Open Food Facts. Designed as a learning resource for nutrition literacy.
+A web-based tool for studying real branded food products using data from the USDA FoodData Central database and Open Food Facts. It will randomly select a real label with photo among almost 2 million different real products. Designed as a learning resource for nutrition literacy.
 
 ---
 
